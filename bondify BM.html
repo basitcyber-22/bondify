@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bondify — Find Your People</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080812;
+  --surface: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.08);
+  --border-h: rgba(255,255,255,0.18);
+  --coral: #FF6B6B;
+  --amber: #FFD93D;
+  --teal: #4ECDC4;
+  --mint: #6BCB77;
+  --lav: #A29BFE;
+  --peach: #FF8E53;
+  --text: #F0EFFF;
+  --muted: rgba(240,239,255,0.55);
+  --dim: rgba(240,239,255,0.28);
+  --grad: linear-gradient(135deg, #FF6B6B, #FFD93D);
+  --fd: 'Syne', sans-serif;
+  --fb: 'DM Sans', sans-serif;
+  --r: 18px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* BG orbs */
+.orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.15}
+.o1{width:500px;height:500px;background:#FF6B6B;top:-100px;left:-100px;animation:drift 22s ease-in-out infinite alternate}
+.o2{width:400px;height:400px;background:#FFD93D;bottom:-80px;right:-80px;animation:drift 18s ease-in-out infinite alternate-reverse}
+.o3{width:300px;height:300px;background:#4ECDC4;top:45%;left:45%;animation:drift 25s ease-in-out infinite alternate}
+.o4{width:220px;height:220px;background:#A29BFE;bottom:30%;left:5%;animation:drift 20s ease-in-out 5s infinite alternate}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-25px) scale(1.08)}100%{transform:translate(-20px,15px) scale(.95)}}
+
+canvas#ptc{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:.9rem 5vw;background:rgba(8,8,18,.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:.5rem;cursor:pointer;text-decoration:none;font-family:var(--fd);font-size:1.35rem;font-weight:800;color:var(--text)}
+.logo-star{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-btn{background:var(--grad);color:#080812;text-decoration:none;padding:.5rem 1.3rem;border-radius:50px;font-weight:700;font-size:.88rem;cursor:pointer;border:none;transition:opacity .2s,transform .2s}
+.nav-btn:hover{opacity:.88;transform:scale(1.04)}
+
+/* PAGES */
+.page{display:none;position:relative;z-index:1;min-height:calc(100vh - 60px);padding:3rem 5vw 6rem;animation:fadeUp .45s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.8rem 2rem;border-radius:50px;font-family:var(--fd);font-weight:700;font-size:.95rem;cursor:pointer;transition:all .2s;text-decoration:none;border:none}
+.btn-p{background:var(--grad);color:#080812;box-shadow:0 4px 22px rgba(255,107,107,.3)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(255,107,107,.45)}
+.btn-p:disabled{opacity:.38;cursor:not-allowed;transform:none}
+.btn-g{background:transparent;color:var(--text);border:1px solid var(--border-h)}
+.btn-g:hover{background:var(--surface)}
+.gt{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* ===== HOME PAGE ===== */
+.hero{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;min-height:calc(100vh - 120px);padding:2rem 0}
+.badge{display:inline-flex;align-items:center;gap:.45rem;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.28);color:var(--coral);padding:.35rem 1rem;border-radius:50px;font-size:.82rem;font-weight:600;margin-bottom:1.4rem}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--coral);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+h1.htitle{font-family:var(--fd);font-size:clamp(2.4rem,4.5vw,3.8rem);font-weight:800;line-height:1.1;margin-bottom:1.3rem}
+.hsub{font-size:1.05rem;line-height:1.7;color:var(--muted);max-width:500px;margin-bottom:2.2rem}
+.hsub strong{color:var(--text)}
+.hbtns{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:2.8rem}
+.stats{display:flex;align-items:center;gap:2rem}
+.snum{display:block;font-family:var(--fd);font-size:1.5rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.slbl{font-size:.78rem;color:var(--muted)}
+.sdiv{width:1px;height:32px;background:var(--border)}
+
+/* Demo card */
+.demo-wrap{position:relative;display:flex;justify-content:center;align-items:center}
+.demo-card{background:rgba(255,255,255,.06);backdrop-filter:blur(18px);border:1px solid var(--border-h);border-radius:var(--r);padding:1.7rem;width:310px;box-shadow:0 20px 50px rgba(0,0,0,.4);animation:fl1 4s ease-in-out infinite}
+@keyframes fl1{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.dh{display:flex;align-items:center;gap:.85rem;margin-bottom:1.1rem}
+.dav{width:50px;height:50px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:1.2rem;font-weight:800;color:#080812;flex-shrink:0}
+.dn{font-family:var(--fd);font-weight:700}
+.dt{font-size:.76rem;color:var(--muted);margin-top:2px}
+.dml{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-bottom:.4rem}
+.dpc{font-weight:700;color:var(--coral);font-size:.95rem}
+.dbar{height:7px;background:rgba(255,255,255,.1);border-radius:10px;overflow:hidden;margin-bottom:1rem}
+.dfill{height:100%;background:var(--grad);border-radius:10px;width:0;transition:width 1.4s cubic-bezier(.4,0,.2,1)}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.chip{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:50px;padding:.22rem .65rem;font-size:.76rem;color:var(--muted)}
+.mini{position:absolute;background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border:1px solid var(--border-h);border-radius:50px;padding:.45rem .9rem;font-size:.8rem;font-weight:600;white-space:nowrap}
+.m1{top:8%;right:-15px;animation:fl2 6s ease-in-out infinite}
+.m2{bottom:15%;left:-15px;color:var(--amber);animation:fl3 5s ease-in-out 1s infinite}
+@keyframes fl2{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-9px) rotate(2deg)}}
+@keyframes fl3{0%,100%{transform:translateY(0) rotate(1deg)}50%{transform:translateY(-11px) rotate(-1deg)}}
+
+/* FEATURES */
+.features{max-width:1100px;margin:4rem auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem}
+.fc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.8rem;transition:all .3s}
+.fc:hover{border-color:var(--border-h);transform:translateY(-3px);background:rgba(255,255,255,.07)}
+.fic{font-size:2rem;margin-bottom:.8rem}
+.fc h3{font-family:var(--fd);font-size:1rem;font-weight:700;margin-bottom:.5rem}
+.fc p{font-size:.88rem;color:var(--muted);line-height:1.6}
+
+/* ===== REGISTER PAGE ===== */
+.reg-wrap{max-width:640px;margin:0 auto}
+.rh{text-align:center;margin-bottom:2.5rem}
+.rh h1{font-family:var(--fd);font-size:2rem;font-weight:800;margin-bottom:.45rem}
+.rh p{color:var(--muted)}
+
+.step{display:none;animation:stepIn .35s ease}
+.step.active{display:block}
+@keyframes stepIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.sbadge{display:inline-block;background:rgba(255,107,107,.12);color:var(--coral);font-size:.72rem;font-weight:700;padding:.28rem .75rem;border-radius:50px;margin-bottom:.65rem;text-transform:uppercase;letter-spacing:.06em}
+.step h2{font-family:var(--fd);font-size:1.6rem;font-weight:800;margin-bottom:1.8rem}
+.fg{margin-bottom:1.4rem}
+.fg label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:.45rem;text-transform:uppercase;letter-spacing:.04em}
+.fi{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.8rem 1rem;color:var(--text);font-family:var(--fb);font-size:.97rem;outline:none;transition:border-color .2s,background .2s;resize:vertical}
+.fi:focus{border-color:var(--coral);background:rgba(255,107,107,.05)}
+.fi::placeholder{color:var(--dim)}
+.rc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.65rem}
+.rc{cursor:pointer}
+.rc input{display:none}
+.rcc{display:flex;flex-direction:column;gap:.2rem;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:.9rem;transition:all .2s}
+.rc:hover .rcc{border-color:var(--border-h);background:rgba(255,255,255,.08)}
+.rc.sel .rcc{border-color:var(--coral);background:rgba(255,107,107,.1);box-shadow:0 0 0 3px rgba(255,107,107,.12)}
+.rci{font-size:1.4rem}
+.rct{font-family:var(--fd);font-weight:700;font-size:.9rem}
+.rcd{font-size:.74rem;color:var(--muted);line-height:1.35}
+.ig{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.85rem}
+.itag{cursor:pointer}
+.itag input{display:none}
+.itag span{display:inline-block;background:var(--surface);border:1.5px solid var(--border);border-radius:50px;padding:.42rem .9rem;font-size:.84rem;font-weight:500;transition:all .2s}
+.itag:hover span{border-color:var(--border-h);background:rgba(255,255,255,.08)}
+.itag input:checked+span{background:rgba(255,107,107,.14);border-color:var(--coral);color:var(--coral);box-shadow:0 0 0 2px rgba(255,107,107,.1)}
+.sc{text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:1.3rem}
+.snav{display:flex;gap:1rem;justify-content:space-between;margin-top:.5rem}
+
+/* ===== MATCHES PAGE ===== */
+.mh{text-align:center;margin-bottom:2.5rem}
+.mh h1{font-family:var(--fd);font-size:2.2rem;font-weight:800;margin-bottom:.4rem}
+.mh p{color:var(--muted);font-size:1rem}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.4rem}
+.mcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.6rem;display:flex;gap:1.3rem;align-items:flex-start;transition:all .3s;opacity:0;transform:translateY(16px)}
+.mcard.vis{animation:cardPop .45s ease forwards}
+@keyframes cardPop{to{opacity:1;transform:translateY(0)}}
+.mcard:hover{border-color:var(--border-h);transform:translateY(-3px)}
+
+/* Ring */
+.rw{position:relative;flex-shrink:0;width:82px;height:82px}
+.rsvg{width:100%;height:100%;transform:rotate(-90deg)}
+.rbg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:8}
+.rfill{fill:none;stroke:url(#rg);stroke-width:8;stroke-linecap:round;stroke-dasharray:0 251.2;transition:stroke-dasharray 1.1s cubic-bezier(.4,0,.2,1)}
+.rc2{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rn{font-family:var(--fd);font-size:1rem;font-weight:800;line-height:1}
+.rl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+
+.mi{flex:1;min-width:0}
+.mnr{display:flex;align-items:baseline;gap:.6rem;margin-bottom:.4rem;flex-wrap:wrap}
+.mnr h3{font-family:var(--fd);font-size:1.1rem;font-weight:800}
+.mav{font-size:.78rem;color:var(--muted)}
+.pbadge{display:inline-block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.22rem .65rem;border-radius:50px;margin-bottom:.65rem}
+.pi{background:rgba(162,155,254,.14);color:var(--lav);border:1px solid rgba(162,155,254,.28)}
+.pe{background:rgba(255,107,107,.14);color:var(--coral);border:1px solid rgba(255,107,107,.28)}
+.pa{background:rgba(255,217,61,.13);color:var(--amber);border:1px solid rgba(255,217,61,.25)}
+.mbio{font-size:.82rem;color:var(--muted);font-style:italic;margin-bottom:.7rem;line-height:1.45}
+.clbl{display:block;font-size:.72rem;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.38rem}
+.cchips{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.7rem}
+.cchip{background:rgba(255,217,61,.1);color:var(--amber);border:1px solid rgba(255,217,61,.2);border-radius:50px;padding:.18rem .6rem;font-size:.72rem;font-weight:500}
+.bsec{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.85rem}
+.br{display:flex;align-items:center;gap:.45rem;font-size:.74rem}
+.brl{color:var(--muted);width:68px;flex-shrink:0}
+.mb{flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden}
+.mf{height:100%;background:var(--grad);border-radius:10px;width:0;transition:width .95s ease}
+.bp{width:26px;text-align:right;color:var(--muted);font-weight:600}
+.tier{display:inline-block;font-size:.74rem;font-weight:700;padding:.25rem .7rem;border-radius:50px}
+.tfire{background:rgba(255,107,107,.14);color:var(--coral);border:1px solid rgba(255,107,107,.28)}
+.tgood{background:rgba(78,205,196,.14);color:var(--teal);border:1px solid rgba(78,205,196,.28)}
+.tok{background:rgba(255,217,61,.12);color:var(--amber);border:1px solid rgba(255,217,61,.22)}
+.tlow{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border)}
+.mfooter{text-align:center;margin-top:2.5rem}
+.empty{text-align:center;padding:5rem 1rem}
+.empty-i{font-size:3.5rem;margin-bottom:1rem}
+.empty h2{font-family:var(--fd);font-size:1.7rem;font-weight:800;margin-bottom:.65rem}
+.empty p{color:var(--muted);margin-bottom:1.8rem}
+
+/* Responsive */
+@media(max-width:900px){.hero{grid-template-columns:1fr;min-height:auto}.demo-wrap{display:none}.features{grid-template-columns:1fr}}
+@media(max-width:600px){nav{padding:.8rem 4vw}.rc-grid{grid-template-columns:1fr 1fr}.mgrid{grid-template-columns:1fr}.mcard{flex-direction:column}.stats{gap:1rem}.snav{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="orbs">
+  <div class="orb o1"></div><div class="orb o2"></div>
+  <div class="orb o3"></div><div class="orb o4"></div>
+</div>
+<canvas id="ptc"></canvas>
+
+<!-- SVG Gradient -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B6B"/>
+      <stop offset="100%" stop-color="#FFD93D"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" onclick="showPage('home')">
+    <span class="logo-star">✦</span> Bondify
+  </a>
+  <button class="nav-btn" onclick="showPage('register')">Join Now</button>
+</nav>
+
+<!-- ========== HOME PAGE ========== -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div>
+      <div class="badge"><span class="dot"></span> No swiping. Just vibing.</div>
+      <h1 class="htitle">Find Friends Who<br><span class="gt">Actually Get You</span></h1>
+      <p class="hsub">Bondify matches you with people who share your <strong>real</strong> interests, energy, and vibe — not just your location. Because great friendships start with something in common.</p>
+      <div class="hbtns">
+        <button class="btn btn-p" onclick="showPage('register')">Start Matching <span>→</span></button>
+        <button class="btn btn-g" onclick="showPage('matches')">See All Matches</button>
+      </div>
+      <div class="stats">
+        <div><span class="snum">93%</span><span class="slbl">Match Accuracy</span></div>
+        <div class="sdiv"></div>
+        <div><span class="snum">20+</span><span class="slbl">Interest Categories</span></div>
+        <div class="sdiv"></div>
+        <div><span class="snum">100%</span><span class="slbl">Friendship Only</span></div>
+      </div>
+    </div>
+    <div class="demo-wrap">
+      <div class="demo-card">
+        <div class="dh">
+          <div class="dav">A</div>
+          <div><div class="dn">Ahmed &amp; Sara</div><div class="dt">🎮 Gaming · 🎵 Music · ☕ Cafes</div></div>
+        </div>
+        <div class="dml"><span>Friendship Match</span><span class="dpc">87%</span></div>
+        <div class="dbar"><div class="dfill" id="demoFill"></div></div>
+        <div class="chips">
+          <span class="chip">🎮 Gaming</span><span class="chip">☕ Cafes</span>
+          <span class="chip">🎵 Music</span><span class="chip">+ 2 more</span>
+        </div>
+      </div>
+      <div class="mini m1">🔥 98% Match!</div>
+      <div class="mini m2">✦ 5 in common</div>
+    </div>
+  </div>
+  <div class="features">
+    <div class="fc"><div class="fic">🧠</div><h3>Smart Matching</h3><p>Our algorithm analyzes personality type, interests, age, and energy vibe to calculate your friendship compatibility.</p></div>
+    <div class="fc"><div class="fic">✦</div><h3>See What's Common</h3><p>Every match shows exactly what you share — specific interests, personality, and vibe breakdown.</p></div>
+    <div class="fc"><div class="fic">🛡️</div><h3>Friendship Only</h3><p>Bondify is built exclusively for platonic friendships. No romance, no awkwardness. Just real connections.</p></div>
+  </div>
+</div>
+
+<!-- ========== REGISTER PAGE ========== -->
+<div class="page" id="page-register">
+  <div class="reg-wrap">
+    <div class="rh">
+      <h1>Build Your <span class="gt">Friend Profile</span></h1>
+      <p>Tell us who you are — the more honest, the better the matches</p>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step active" id="s1">
+      <div class="sbadge">Step 1 of 3</div>
+      <h2>The Basics</h2>
+      <div class="fg">
+        <label>Your Name</label>
+        <input class="fi" id="r-name" type="text" placeholder="e.g. Ahmed, Sara, Ali..." maxlength="40">
+      </div>
+      <div class="fg">
+        <label>Your Age</label>
+        <input class="fi" id="r-age" type="number" placeholder="How old are you?" min="13" max="60">
+      </div>
+      <div class="fg">
+        <label>Short Bio <span style="font-weight:400;opacity:.6;text-transform:none">(optional)</span></label>
+        <textarea class="fi" id="r-bio" rows="3" maxlength="200" placeholder="A quick line about yourself..."></textarea>
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:.5rem" onclick="goStep(1,2)">Continue →</button>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step" id="s2">
+      <div class="sbadge">Step 2 of 3</div>
+      <h2>Your Personality</h2>
+      <div class="fg">
+        <label>You are mostly...</label>
+        <div class="rc-grid" id="pers-grid">
+          <label class="rc" onclick="pickCard(this,'pers')"><input type="radio" name="pers" value="Introvert">
+            <div class="rcc"><span class="rci">🌙</span><span class="rct">Introvert</span><span class="rcd">Recharge alone, love deep 1-on-1 talks</span></div></label>
+          <label class="rc" onclick="pickCard(this,'pers')"><input type="radio" name="pers" value="Extrovert">
+            <div class="rcc"><span class="rci">⚡</span><span class="rct">Extrovert</span><span class="rcd">Love groups, parties, meeting new people</span></div></label>
+          <label class="rc" onclick="pickCard(this,'pers')"><input type="radio" name="pers" value="Ambivert">
+            <div class="rcc"><span class="rci">☯️</span><span class="rct">Ambivert</span><span class="rcd">Depends on the mood — could be either</span></div></label>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Your Vibe</label>
+        <div class="rc-grid">
+          <label class="rc" onclick="pickCard(this,'vibe')"><input type="radio" name="vibe" value="Chill">
+            <div class="rcc"><span class="rci">😌</span><span class="rct">Chill</span><span class="rcd">Low-key, relaxed, easygoing</span></div></label>
+          <label class="rc" onclick="pickCard(this,'vibe')"><input type="radio" name="vibe" value="Energetic">
+            <div class="rcc"><span class="rci">🚀</span><span class="rct">Energetic</span><span class="rcd">Always doing something, high energy</span></div></label>
+          <label class="rc" onclick="pickCard(this,'vibe')"><input type="radio" name="vibe" value="Creative">
+            <div class="rcc"><span class="rci">🎨</span><span class="rct">Creative</span><span class="rcd">Artistic, expressive, curious</span></div></label>
+          <label class="rc" onclick="pickCard(this,'vibe')"><input type="radio" name="vibe" value="Nerdy">
+            <div class="rcc"><span class="rci">🔭</span><span class="rct">Nerdy</span><span class="rcd">Deep dives, tech, books &amp; learning</span></div></label>
+        </div>
+      </div>
+      <div class="snav">
+        <button class="btn btn-g" onclick="goStep(2,1)">← Back</button>
+        <button class="btn btn-p" onclick="goStep(2,3)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step" id="s3">
+      <div class="sbadge">Step 3 of 3</div>
+      <h2>Your Interests</h2>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:1.2rem">Pick min 3 — max 10</p>
+      <div class="ig" id="igrid">
+        <!-- JS will inject tags -->
+      </div>
+      <div class="sc" id="sc">0 interests selected</div>
+      <div class="snav">
+        <button class="btn btn-g" onclick="goStep(3,2)">← Back</button>
+        <button class="btn btn-p" id="submitBtn" disabled onclick="submitProfile()">Find My Matches ✦</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MATCHES PAGE ========== -->
+<div class="page" id="page-matches">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="mh">
+      <h1 id="match-title">Your <span class="gt">Matches</span></h1>
+      <p id="match-sub">Ranked by friendship compatibility</p>
+    </div>
+    <div class="mgrid" id="match-grid"></div>
+    <div class="mfooter">
+      <button class="btn btn-g" onclick="showPage('register')" style="margin-top:1rem">+ Add Another Profile</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Particles ───────────────────────────────
+(function(){
+  const c=document.getElementById('ptc'),cx=c.getContext('2d');
+  const COLS=['#FF6B6B','#FFD93D','#6BCB77','#4ECDC4','#A29BFE','#FF8E53'];
+  let W,H,pts=[];
+  function rnd(a,b){return Math.random()*(b-a)+a}
+  function resize(){W=c.width=innerWidth;H=c.height=innerHeight}
+  function mk(){return{x:rnd(0,W),y:rnd(0,H),r:rnd(1,2.2),vx:rnd(-.25,.25),vy:rnd(-.35,-.08),a:rnd(.2,.65),col:COLS[Math.floor(Math.random()*COLS.length)],life:0,ml:rnd(130,320)}}
+  function init(){pts=[];for(let i=0;i<75;i++){const p=mk();p.life=rnd(0,p.ml);pts.push(p)}}
+  function draw(){
+    cx.clearRect(0,0,W,H);
+    pts.forEach((p,i)=>{
+      const pr=p.life/p.ml,f=pr<.2?pr/.2:pr>.8?(1-pr)/.2:1;
+      cx.save();cx.globalAlpha=p.a*f;cx.fillStyle=p.col;
+      cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fill();cx.restore();
+      p.x+=p.vx;p.y+=p.vy;p.life++;
+      if(p.life>=p.ml){pts[i]=mk();pts[i].life=0}
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{resize();init()});
+  resize();init();draw();
+})();
+
+// ─── Interests list ──────────────────────────
+const INTERESTS=[
+  ['🎮','Gaming'],['🎵','Music'],['📚','Reading'],['🎬','Movies'],
+  ['⚽','Sports'],['☕','Cafes'],['✈️','Travel'],['🍕','Food & Cooking'],
+  ['💻','Tech & Coding'],['🎨','Art & Design'],['📸','Photography'],
+  ['🏃','Fitness'],['🎭','Drama'],['🌿','Nature & Hiking'],['🎤','Singing'],
+  ['🧩','Board Games'],['🐾','Pets'],['📱','Social Media'],['🔬','Science'],['✍️','Writing']
+];
+
+// Build interest tags
+(function(){
+  const g=document.getElementById('igrid');
+  INTERESTS.forEach(([ic,nm])=>{
+    g.innerHTML+=`<label class="itag"><input type="checkbox" name="int" value="${nm}"><span>${ic} ${nm}</span></label>`;
+  });
+  g.querySelectorAll('input').forEach(cb=>cb.addEventListener('change',updateCount));
+})();
+
+function updateCount(){
+  const n=document.querySelectorAll('[name="int"]:checked').length;
+  document.getElementById('sc').textContent=`${n} interest${n!==1?'s':''} selected`;
+  document.getElementById('submitBtn').disabled=n<3;
+  if(n>10){event.target.checked=false;updateCount()}
+}
+
+// ─── Radio card selection ─────────────────────
+function pickCard(el,grp){
+  document.querySelectorAll(`[name="${grp}"]`).forEach(r=>r.closest('.rc').classList.remove('sel'));
+  el.classList.add('sel');
+  el.querySelector('input').checked=true;
+}
+
+// ─── Page navigation ──────────────────────────
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(name==='home') setTimeout(()=>document.getElementById('demoFill').style.width='87%',800);
+  if(name==='matches') loadMatches(null);
+}
+
+// ─── Step navigation ──────────────────────────
+function goStep(from,to){
+  if(to>from){
+    if(from===1){
+      const n=document.getElementById('r-name').value.trim();
+      const a=document.getElementById('r-age').value;
+      if(!n||!a){alert('Please fill in your name and age!');return}
+    }
+    if(from===2){
+      const p=document.querySelector('[name="pers"]:checked');
+      const v=document.querySelector('[name="vibe"]:checked');
+      if(!p||!v){alert('Please pick both a personality type and a vibe!');return}
+    }
+  }
+  document.getElementById('s'+from).classList.remove('active');
+  document.getElementById('s'+to).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ─── Data storage ─────────────────────────────
+function getUsers(){
+  try{return JSON.parse(localStorage.getItem('bondify_users')||'[]')}
+  catch{return[]}
+}
+function saveUsers(u){localStorage.setItem('bondify_users',JSON.stringify(u))}
+
+// ─── Submit profile ───────────────────────────
+function submitProfile(){
+  const name=document.getElementById('r-name').value.trim();
+  const age=parseInt(document.getElementById('r-age').value)||18;
+  const bio=document.getElementById('r-bio').value.trim();
+  const pers=document.querySelector('[name="pers"]:checked')?.value||'Ambivert';
+  const vibe=document.querySelector('[name="vibe"]:checked')?.value||'Chill';
+  const interests=[...document.querySelectorAll('[name="int"]:checked')].map(c=>c.value);
+
+  const user={id:Date.now().toString(),name,age,bio,personality:pers,vibe,interests};
+  const users=getUsers();
+  users.push(user);
+  saveUsers(users);
+
+  // Reset form
+  document.getElementById('r-name').value='';
+  document.getElementById('r-age').value='';
+  document.getElementById('r-bio').value='';
+  document.querySelectorAll('[name="pers"],[name="vibe"]').forEach(r=>{r.checked=false;r.closest('.rc').classList.remove('sel')});
+  document.querySelectorAll('[name="int"]').forEach(c=>c.checked=false);
+  updateCount();
+  document.getElementById('s3').classList.remove('active');
+  document.getElementById('s1').classList.add('active');
+
+  // Go to matches
+  loadMatches(user);
+  showPage('matches');
+}
+
+// ─── Match algorithm ──────────────────────────
+function calcMatch(u1,u2){
+  let score=0;
+  const i1=new Set(u1.interests), i2=new Set(u2.interests);
+  const common=[...i1].filter(x=>i2.has(x));
+  const union=new Set([...i1,...i2]);
+  const iScore=union.size?common.length/union.size:0;
+  score+=iScore*50;
+
+  let pScore=0;
+  if(u1.personality===u2.personality) pScore=100;
+  else if(u1.personality==='Ambivert'||u2.personality==='Ambivert') pScore=60;
+  score+=pScore*0.25;
+
+  const ageDiff=Math.abs(u1.age-u2.age);
+  let aScore=ageDiff<=2?100:ageDiff<=5?67:ageDiff<=10?33:0;
+  score+=aScore*0.15;
+
+  let vScore=u1.vibe===u2.vibe?100:0;
+  score+=vScore*0.10;
+
+  return{score:Math.round(score),common,breakdown:{interests:Math.round(iScore*100),personality:pScore,age:aScore,vibe:vScore}};
+}
+
+// ─── Render matches ───────────────────────────
+function loadMatches(currentUser){
+  const users=getUsers();
+  const grid=document.getElementById('match-grid');
+  grid.innerHTML='';
+
+  if(!currentUser){
+    // Show all users + let them pick
+    document.getElementById('match-title').innerHTML='All <span class="gt">Profiles</span>';
+    document.getElementById('match-sub').textContent=`${users.length} people on Bondify`;
+    if(users.length===0){
+      grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-i">👥</div><h2>Nobody here yet</h2><p>Be the first to join Bondify!</p><button class="btn btn-p" onclick="showPage('register')">Register Now</button></div>`;
+      return;
+    }
+    users.forEach((u,i)=>{
+      const card=document.createElement('div');
+      card.className='mcard';
+      card.style.setProperty('--i',i+1);
+      card.innerHTML=cardHTML(u,null,i);
+      grid.appendChild(card);
+      setTimeout(()=>card.classList.add('vis'),(i+1)*100);
+    });
+    return;
+  }
+
+  // Show matches for currentUser
+  document.getElementById('match-title').innerHTML=`Hey <span class="gt">${currentUser.name}</span> 👋`;
+  document.getElementById('match-sub').textContent='Here are your friendship matches, ranked by compatibility';
+
+  const others=users.filter(u=>u.id!==currentUser.id);
+  if(others.length===0){
+    grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-i">🌱</div><h2>You're first here!</h2><p>No matches yet. Share Bondify with friends!</p><button class="btn btn-g" onclick="showPage('home')">Go Home</button></div>`;
+    return;
+  }
+
+  const results=others.map(u=>({u,...calcMatch(currentUser,u)}));
+  results.sort((a,b)=>b.score-a.score);
+
+  results.forEach((r,i)=>{
+    const card=document.createElement('div');
+    card.className='mcard';
+    card.style.setProperty('--i',i+1);
+    card.innerHTML=cardHTML(r.u,r,i);
+    grid.appendChild(card);
+    setTimeout(()=>{
+      card.classList.add('vis');
+      // Animate ring
+      const rf=card.querySelector('.rfill');
+      if(rf) setTimeout(()=>rf.style.strokeDasharray=`${r.score/100*251.2} 251.2`,200);
+      // Animate bars
+      card.querySelectorAll('.mf').forEach(b=>setTimeout(()=>b.style.width=b.dataset.w+'%',300));
+    },(i+1)*120);
+  });
+}
+
+function cardHTML(u,r,i){
+  const score=r?r.score:null;
+  const bd=r?r.breakdown:{};
+  const common=r?r.common:[];
+
+  // Ring
+  const ringHTML=score!==null?`
+    <div class="rw">
+      <svg class="rsvg" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" class="rbg"/>
+        <circle cx="50" cy="50" r="40" class="rfill"/>
+      </svg>
+      <div class="rc2"><span class="rn">${score}%</span><span class="rl">match</span></div>
+    </div>`:'<div class="rw" style="background:var(--surface);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem">👤</div>';
+
+  const persClass=u.personality==='Introvert'?'pi':u.personality==='Extrovert'?'pe':'pa';
+
+  const commonHTML=common.length?`
+    <span class="clbl">✦ You both love</span>
+    <div class="cchips">${common.slice(0,5).map(x=>`<span class="cchip">${x}</span>`).join('')}${common.length>5?`<span class="cchip">+${common.length-5}</span>`:''}</div>`:'';
+
+  const breakHTML=r?`
+    <div class="bsec">
+      ${[['Interests',bd.interests],['Personality',bd.personality],['Vibe',bd.vibe]].map(([lbl,val])=>`
+      <div class="br"><span class="brl">${lbl}</span><div class="mb"><div class="mf" data-w="${val}"></div></div><span class="bp">${val}%</span></div>`).join('')}
+    </div>`:'';
+
+  const tierHTML=r?`<span class="tier ${score>=80?'tfire':score>=60?'tgood':score>=40?'tok':'tlow'}">${score>=80?'🔥 Incredible Match':score>=60?'✦ Great Match':score>=40?'👍 Decent Match':'🌱 New Connection'}</span>`:'';
+
+  return`${ringHTML}
+  <div class="mi">
+    <div class="mnr"><h3>${u.name}</h3><span class="mav">${u.age}y · ${u.vibe}</span></div>
+    <span class="pbadge ${persClass}">${u.personality}</span>
+    ${u.bio?`<p class="mbio">"${u.bio}"</p>`:''}
+    ${commonHTML}
+    ${breakHTML}
+    ${tierHTML}
+    <div style="margin-top:.5rem;font-size:.75rem;color:var(--dim)">${u.interests.slice(0,4).join(' · ')}</div>
+  </div>`;
+}
+
+// ─── Init home demo bar ───────────────────────
+setTimeout(()=>document.getElementById('demoFill').style.width='87%',900);
+</script>
+</body>
+</html>
